@@ -2716,9 +2716,9 @@
         d.className = 'ai' + (selId === a.id ? ' on' : '');
         const stepLabels = ['', 'อัปโหลดแล้ว', 'HR คัดกรอง', 'รอผู้บริหาร รอบ1', 'นัดสัมภาษณ์', 'บันทึกผลสัมภาษณ์', 'รอผู้บริหาร รอบ2', 'เตรียม Offer', 'รออนุมัติ Offer', 'รับเข้าทำงาน'];
         const stepColors = ['', '#faeeda|#633806', '#e6f1fb|#0c447c', '#faeeda|#633806', '#e1f5ee|#085041', '#e6f1fb|#0c447c', '#faeeda|#633806', '#eaf3de|#27500a', '#faeeda|#633806', '#eaf3de|#27500a'];
-        const sc = a.closed ? '#fbeaf0|#72243e' : (stepColors[a.step] || '#f5f4f1|#888780');
+        const sc = a.closed ? '#fbeaf0|#72243e' : (a.step >= 9 && a.offerResult === 'rejected' ? '#fbeaf0|#72243e' : (stepColors[a.step] || '#f5f4f1|#888780'));
         const [sbg, sfg] = sc.split('|');
-        const slbl = a.closed ? 'ปิดเคส' : (stepLabels[a.step] || '');
+        const slbl = a.closed ? 'ปิดเคส' : (a.step >= 9 && a.offerResult === 'rejected' ? 'ผู้สมัครปฏิเสธ Offer' : (stepLabels[a.step] || ''));
         d.innerHTML = `<div class="aiv" style="background:${c.bg};color:${c.fg}">${ini(a.name)}</div>
 <div style="flex:1;min-width:0">
   <div class="ai-name">${a.name}</div>
@@ -2754,6 +2754,7 @@
 
     function badgeHtml(a) {
       if (a.closed) return '<span class="badge b-no">ปิดเคส</span>';
+      if (a.step >= 9 && a.offerResult === 'rejected') return '<span class="badge b-no">ผู้สมัครปฏิเสธ Offer</span>';
       if (a.step >= 9) return '<span class="badge b-hire">รับเข้าทำงาน</span>';
       if (a.step >= 3) return '<span class="badge b-ok">กำลังดำเนินการ</span>';
       const hasDraft = localStorage.getItem('hr-draft-' + a.id);
@@ -2769,8 +2770,8 @@
       let tlHtml = '';
 
       STEPS.forEach((st, idx) => {
-        const done = !a.closed && a.step > st.s;
-        const cur = !a.closed && a.step === st.s;
+        const done = a.step > st.s;
+        const cur = !a.closed && a.step === st.s
         let ic = 'ic-off', ico = 'ti-circle';
         if (done) { ic = 'ic-done'; ico = 'ti-check'; }
         else if (cur) { ic = 'ic-cur'; ico = 'ti-clock'; }
@@ -2933,7 +2934,9 @@ ${a.adm3By ? `<div class="tl-sub" style="margin-top:5px">โดย ${a.adm3By}</
         tlHtml += `<div class="tli">
       <div class="tl-ic ic-no"><i class="ti ti-x" style="font-size:11px"></i></div>
       <div class="tl-body"><div class="tl-lbl" style="color:#72243e">ปิดเคส</div>
-      <div class="tl-note err">${a.closeR}</div></div>
+      <div class="tl-note err">${a.closeR}</div>
+      ${a.adm3Note ? `<div class="tl-note err" style="margin-top:5px"><b>โน้ตผู้บริหาร:</b> ${a.adm3Note}</div>` : ''}
+      </div>
     </div>`;
       }
 
@@ -2976,7 +2979,7 @@ ${a.adm3By ? `<div class="tl-sub" style="margin-top:5px">โดย ${a.adm3By}</
       }
 
       dp.innerHTML = `
-    <div class="dh"><div class="dh-name">${a.name}</div><div style="display:flex;align-items:center;gap:8px">${badgeHtml(a)}${(!a.closed && a.step < 9) ? `<button style="padding:5px 11px;border-radius:7px;font-size:12px;font-family:inherit;cursor:pointer;border:1px solid #f0d090;background:#faeeda;color:#633806;display:flex;align-items:center;gap:5px;pointer-events:auto!important;opacity:1!important" onclick="doWithdraw(${a.id})"><i class="ti ti-user-x" style="font-size:13px"></i>ผู้สมัครยกเลิกกระทันหัน</button>` : ''}${(a.closed || a.step >= 9) ? `<button style="padding:5px 11px;border-radius:7px;font-size:12px;font-family:inherit;cursor:pointer;border:1px solid #f4c0d1;background:#fbeaf0;color:#72243e;display:flex;align-items:center;gap:5px;pointer-events:auto!important;opacity:1!important" onclick="doDelete(${a.id})"><i class="ti ti-trash" style="font-size:13px"></i>ลบ</button>` : ''}</div></div>
+    <div class="dh"><div class="dh-name">${a.name}</div><div style="display:flex;align-items:center;gap:8px">${badgeHtml(a)}${!a.closed ? `<button style="padding:5px 11px;border-radius:7px;font-size:12px;font-family:inherit;cursor:pointer;border:1px solid #f0d090;background:#faeeda;color:#633806;display:flex;align-items:center;gap:5px;pointer-events:auto!important;opacity:1!important" onclick="doWithdraw(${a.id})"><i class="ti ti-user-x" style="font-size:13px"></i>ผู้สมัครยกเลิกกระทันหัน</button>` : ''}${(a.closed || a.step >= 9) ? `<button style="padding:5px 11px;border-radius:7px;font-size:12px;font-family:inherit;cursor:pointer;border:1px solid #f4c0d1;background:#fbeaf0;color:#72243e;display:flex;align-items:center;gap:5px;pointer-events:auto!important;opacity:1!important" onclick="doDelete(${a.id})"><i class="ti ti-trash" style="font-size:13px"></i>ลบ</button>` : ''}</div></div>
 
     <div class="db">
       <div class="meta-card">
@@ -3157,6 +3160,12 @@ ${a.adm3By ? `<div class="tl-sub" style="margin-top:5px">โดย ${a.adm3By}</
       }
     }
 
+    async function saveOfferRespNote(id) {
+      const note = document.getElementById('offer-resp-note-' + id)?.value || '';
+      const ok = await dbUpdate(id, { offerNote: note });
+      if (ok) showToast('บันทึกร่างแล้ว');
+    }
+
     async function doSendOfferLetter(id) {
       const channel = document.getElementById('of2-channel')?.value || 'Email';
       const email = document.getElementById('of2-email')?.value.trim() || '';
@@ -3197,6 +3206,7 @@ ${a.adm3By ? `<div class="tl-sub" style="margin-top:5px">โดย ${a.adm3By}</
         renderRep();
       }
     }
+    // ============ END JOB OFFER PAGE LOGIC ============
 
     async function doClose(id, r) {
       const confirmed = await askConfirm(
@@ -3204,7 +3214,14 @@ ${a.adm3By ? `<div class="tl-sub" style="margin-top:5px">โดย ${a.adm3By}</
         { title: 'ปิดเคส', okText: 'ปิดเคส', danger: true }
       );
       if (!confirmed) return;
-      const ok = await dbUpdate(id, { closed: true, closeR: r });
+      const note = document.getElementById('adm3-ta')?.value
+        || document.getElementById('oa-note-' + id)?.value
+        || document.getElementById('adm-note-' + id)?.value
+        || document.getElementById('adm1-ta')?.value
+        || '';
+      const fields = { closed: true, closeR: r };
+      if (note) fields.adm3Note = note;
+      const ok = await dbUpdate(id, fields);
       if (ok) { showToast('ปิดเคสแล้ว'); await rerender(id); }
       renderExec();
     }
@@ -3506,7 +3523,7 @@ ${a.step === 6 ? `
     </div>`;
 
       el.innerHTML = `
-    <div class="of2-dh">
+<div class="of2-dh">
       <div class="of2-dh-left">
         <div class="avlg" style="background:${c.bg};color:${c.fg};width:38px;height:38px;font-size:13px">${ini(a.name)}</div>
         <div>
@@ -3514,7 +3531,10 @@ ${a.step === 6 ? `
           <div class="of2-dh-pos">${a.pos} · ${a.src || '-'}</div>
         </div>
       </div>
-      ${offerStatusBadge(status)}
+      <div style="display:flex;align-items:center;gap:8px">
+        ${offerStatusBadge(status)}
+<button style="padding:5px 11px;border-radius:7px;font-size:12px;font-family:inherit;cursor:pointer;border:1px solid #f0d090;background:#faeeda;color:#633806;display:flex;align-items:center;gap:5px" onclick="doWithdraw(${a.id})"><i class="ti ti-user-x" style="font-size:13px"></i>ยกเลิกกะทันหัน</button>
+      </div>
     </div>
     <div class="of2-db">
       <div class="of2-summary-card">
@@ -3537,50 +3557,10 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
       const _btn = document.getElementById('of2-send-btn');
       if (_btn) _btn.disabled = false;
     }
-    async function doSendOfferLetter(id) {
-      const channel = document.getElementById('of2-channel')?.value || 'Email';
-      const email = document.getElementById('of2-email')?.value.trim() || '';
-      const note = document.getElementById('of2-note')?.value || '';
-      //
-      if (channel === 'Email' && !email) {
-        showToast('กรุณากรอก Email ผู้สมัคร', true);
-        return;
-      }
-
-      const now = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
-      const ok = await dbUpdate(id, {
-        offerChannel: channel,
-        offerEmail: email,
-        offerSentNote: note,
-        offerSentAt: now,
-        offerSentBy: currentUser?.name || '',
-      });
-      if (ok) {
-        showToast('บันทึกว่าส่ง Offer Letter แล้ว');
-        await dbLoad();
-        renderOffer();
-        const a = getA(id);
-        if (a) renderOfferDetail(a);
-      }
-    }
-
     async function saveOfferRespNote(id) {
       const note = document.getElementById('offer-resp-note-' + id)?.value || '';
       const ok = await dbUpdate(id, { offerNote: note });
       if (ok) showToast('บันทึกร่างแล้ว');
-    }
-
-    async function doOfferResponse(id, result) {
-      const now = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
-      const ok = await dbUpdate(id, { offerResult: result, candidateRespondedAt: now });
-      if (ok) {
-        showToast(result === 'accepted' ? 'บันทึกว่าผู้สมัครตอบรับแล้ว' : 'บันทึกว่าผู้สมัครปฏิเสธแล้ว');
-        await dbLoad();
-        renderOffer();
-        const a = getA(id);
-        if (a) renderOfferDetail(a);
-        renderRep();
-      }
     }
     // ============ END JOB OFFER PAGE LOGIC ============
 
@@ -3665,8 +3645,18 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
       const row = document.getElementById('of2-email-row');
       if (row) row.style.display = ch === 'Email' ? '' : 'none';
     }
+    async function doWithdraw(id) {
+      const confirmed = await askConfirm(
+        'ยืนยันว่าผู้สมัครยกเลิกกะทันหัน?',
+        { title: 'ผู้สมัครยกเลิกกะทันหัน', okText: 'ยืนยัน', danger: true }
+      );
+      if (!confirmed) return;
+      const ok = await dbUpdate(id, { closed: true, closeR: 'ผู้สมัครยกเลิกกะทันหัน', step: 0 }); if (ok) { showToast('บันทึกแล้ว'); await rerender(id); }
+    }
+
     async function doDelete(id) {
-      if (!confirm('ยืนยันการลบผู้สมัครนี้?')) return;
+      const confirmed = await askConfirm('ยืนยันการลบผู้สมัครนี้?', { title: 'ลบผู้สมัคร', okText: 'ลบ', danger: true });
+      if (!confirmed) return;
 
       await dbLoad();
       renderList(); renderOfferAdm(); renderAdm(); renderRep(); renderExec(); renderHistory();
@@ -3692,7 +3682,7 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
     let selOAId = null;
 
     function oaStatus(a) {
-      if (a.adm3By && a.step >= 9) return 'approved';
+      if (a.adm3By && a.step >= 9 && a.offerResult !== 'rejected') return 'approved';
       if (a.step === 7 && a.adm3Note && !a.adm3By) return 'returned';  // ← เพิ่มบรรทัดนี้
       if (a.adm3Note && a.step === 8 && a.closed) return 'returned';
       if (a.closed && (a.closeR || '').includes('Offer')) return 'returned';
@@ -3712,9 +3702,9 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
       console.log('deleted rows:', DATA.filter(a => a.deleted).map(a => a.name));
       const eligible = DATA.filter(a =>
         a.deleted !== true &&
+        !a.closed &&
         (a.step === 8 ||
-          (a.step >= 9 && !a.closed) ||
-          (a.closed && (a.closeR || '').includes('Offer')) ||
+          a.step >= 9 ||
           (a.step === 7 && a.adm3Note && !a.adm3By))
       );
       const q = (document.getElementById('oa-search')?.value || '').trim();
@@ -3844,7 +3834,7 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
               <div class="of2-dh-pos">${a.pos} · ${a.src || '-'}</div>
             </div>
           </div>
-        <div style="display:flex;align-items:center;gap:8px">${stBadgeHtml}${(currentUser?.role === 'admin' && (a.closed || a.step >= 9)) ? `<button style="padding:5px 11px;border-radius:7px;font-size:12px;font-family:inherit;cursor:pointer;border:1px solid #f4c0d1;background:#fbeaf0;color:#72243e;display:flex;align-items:center;gap:5px;pointer-events:auto;opacity:1" onclick="doDelete(${a.id})"><i class="ti ti-trash" style="font-size:13px"></i>ลบ</button>` : ''}</div>
+      <div style="display:flex;align-items:center;gap:8px">${stBadgeHtml}</div>
         </div>
         <div style="display:flex;gap:0;border-bottom:1px solid #e8e6e0;background:#fff;flex-shrink:0">
           <div id="oa-tab-offer" onclick="switchOATab('offer',${a.id})" style="padding:10px 18px;font-size:12.5px;font-weight:500;cursor:pointer;border-bottom:2px solid #1d9e75;color:#0f6e56">อนุมัติ Offer</div>
@@ -3896,9 +3886,9 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
         { icon: 'ti-user-check', color: '#378add', bg: '#e6f1fb', lbl: 'HR คัดกรอง', val: a.hrBy ? `โดย ${a.hrBy}` : (a.hrNote ? 'บันทึกแล้ว' : '—'), sub: a.hrNote || '' },
         { icon: 'ti-circle-check', color: '#ba7517', bg: '#faeeda', lbl: 'ผู้บริหารอนุมัติ รอบ 1', val: a.adm1By ? `โดย ${a.adm1By}` : (a.adm1 ? 'อนุมัติแล้ว' : '—'), sub: a.adm1 || '' },
         { icon: 'ti-calendar', color: '#1d9e75', bg: '#e1f5ee', lbl: 'นัดสัมภาษณ์', val: a.intDate ? `${a.intDate} เวลา ${a.intTime} น.` : '—', sub: a.intBy ? `ผู้สัมภาษณ์: ${a.intBy}` : '' },
-        { icon: 'ti-clipboard-list', color: '#378add', bg: '#e6f1fb', lbl: 'ผลสัมภาษณ์', val: a.hrRes === 'pass' ? '✓ ผ่าน' : a.hrRes === 'fail' ? '✗ ไม่ผ่าน' : '—', sub: a.hrResDet || '' },
+        { icon: 'ti-clipboard-list', color: '#378add', bg: '#e6f1fb', lbl: 'ผลสัมภาษณ์', val: a.hrRes === 'pass' ? '✓ ผ่าน' : a.hrRes === 'fail' ? '✗ ไม่ผ่าน' : '—', sub: [a.hrResDet, a.hrSalary ? `💰 HR ตกลงเงินเดือน: ${a.hrSalary} บาท` : ''].filter(Boolean).join(' · ') },
         { icon: 'ti-circle-check', color: '#ba7517', bg: '#faeeda', lbl: 'ผู้บริหารอนุมัติ รอบ 2', val: a.adm2By ? `โดย ${a.adm2By}` : (a.adm2 ? 'อนุมัติแล้ว' : '—'), sub: a.adm2 || '' },
-        { icon: 'ti-briefcase', color: '#0f6e56', bg: '#e1f5ee', lbl: 'เงินเดือน / วันเริ่มงาน', val: a.salary ? `${a.salary} บาท` : '—', sub: a.startDate ? `เริ่มงาน: ${a.startDate} · ${a.employmentType || 'พนักงานประจำ'}` : '' },
+        { icon: 'ti-briefcase', color: '#0f6e56', bg: '#e1f5ee', lbl: 'เงินเดือน / วันเริ่มงาน', val: a.salary ? `${a.salary} บาท` : '—', sub: [a.startDate ? `เริ่มงาน: ${a.startDate} · ${a.employmentType || 'พนักงานประจำ'}` : '', a.hrSalary && a.hrSalary !== a.salary ? `(HR ตกลงไว้: ${a.hrSalary} บาท)` : ''].filter(Boolean).join(' · ') },
       ];
       const html = rows.map((r, idx) => {
         const isLast = idx === rows.length - 1;
@@ -3949,8 +3939,10 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
         let badgeBg, badgeFg, badgeTxt;
         if (a.closed) {
           badgeBg = '#fbeaf0'; badgeFg = '#72243e'; badgeTxt = 'ปิดเคส';
-        } else if (a.step >= 9) {
+        } else if (a.step >= 9 && a.offerResult !== 'rejected') {
           badgeBg = '#eaf3de'; badgeFg = '#27500a'; badgeTxt = 'รับเข้าทำงาน';
+        } else if (a.step >= 9 && a.offerResult === 'rejected') {
+          badgeBg = '#fbeaf0'; badgeFg = '#72243e'; badgeTxt = 'ผู้สมัครปฏิเสธ Offer';
         } else if (a.step === 8) {
           badgeBg = '#faeeda'; badgeFg = '#633806'; badgeTxt = 'รออนุมัติ Offer';
         } else if (a.step === 7) {
@@ -3993,6 +3985,7 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
 
       let statusBadge = '';
       if (a.closed) statusBadge = '<span class="badge b-no">ปิดเคส</span>';
+      else if (a.step >= 9 && a.offerResult === 'rejected') statusBadge = '<span class="badge b-no">ผู้สมัครปฏิเสธ Offer</span>';
       else if (a.step >= 9) statusBadge = '<span class="badge b-hire">รับเข้าทำงาน</span>';
       else statusBadge = '<span class="badge b-ok">กำลังดำเนินการ</span>';
 
@@ -4032,7 +4025,9 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
             <i class="ti ti-x" style="font-size:11px"></i>
           </div>
           <div style="flex:1"><div style="font-size:13px;font-weight:500;color:#72243e">ปิดเคส</div>
-          <div style="font-size:12px;background:#fbeaf0;border:1px solid #f4c0d1;color:#72243e;border-radius:7px;padding:7px 10px;margin-top:4px">${a.closeR || '-'}</div></div>
+          <div style="font-size:12px;background:#fbeaf0;border:1px solid #f4c0d1;color:#72243e;border-radius:7px;padding:7px 10px;margin-top:4px">${a.closeR || '-'}</div>
+          ${a.adm3Note ? `<div style="font-size:12px;background:#fbeaf0;border:1px solid #f4c0d1;color:#72243e;border-radius:7px;padding:7px 10px;margin-top:5px"><b>โน้ตผู้บริหาร:</b> ${a.adm3Note}</div>` : ''}
+          </div>
         </div>` : '';
 
       el.innerHTML = `
@@ -4071,28 +4066,31 @@ ${a.phone ? `
     // ============ END HISTORY PAGE LOGIC ============
 
     async function doDeleteAdmin(id) {
-      if (!confirm('ยืนยันการลบข้อมูลถาวร?')) return;
+      const confirmed = await askConfirm('ลบออกจากประวัติผู้บริหาร?', { title: 'ลบประวัติ', okText: 'ลบ', danger: true });
+      if (!confirmed) return;
 
-      const { data: raw } = await _sb.from('applicants').select('resume_url').eq('id', id).single();
+      const { data: raw } = await _sb.from('applicants').select('deleted, resume_url').eq('id', id).single();
+      const ok = await dbUpdate(id, { deletedAdmin: true });
+      if (!ok) return;
 
-      if (raw?.resume_url) {
-        try {
-          const path = decodeURIComponent(raw.resume_url.split('/resumes/')[1].split('?')[0]);
-          await _sb.storage.from('resumes').remove([path]);
-        } catch (e) { console.warn('ลบไฟล์ไม่สำเร็จ:', e); }
+      if (raw?.deleted) {
+        if (raw?.resume_url) {
+          try {
+            const path = decodeURIComponent(raw.resume_url.split('/resumes/')[1].split('?')[0]);
+            await _sb.storage.from('resumes').remove([path]);
+          } catch (e) { console.warn('ลบไฟล์ไม่สำเร็จ:', e); }
+        }
+        await _sb.from('applicants').delete().eq('id', id);
+        showToast('ลบข้อมูลถาวรแล้ว');
+      } else {
+        showToast('ลบออกจากประวัติผู้บริหารแล้ว');
       }
 
-      const { error } = await _sb.from('applicants').delete().eq('id', id);
-      if (error) { showToast('ลบไม่สำเร็จ: ' + error.message, true); return; }
-
-      showToast('ลบข้อมูลถาวรแล้ว');
       selHistId = null;
       document.getElementById('history-detail').innerHTML = '<div class="empty"><i class="ti ti-history"></i>เลือกผู้สมัครเพื่อดูประวัติ</div>';
       await dbLoad();
       renderHistory(); renderOfferAdm(); renderAdm(); renderRep(); renderExec(); renderList();
     }
-
-    // ============ END OFFER APPROVAL PAGE LOGIC ============
 
   </script>
 </body>

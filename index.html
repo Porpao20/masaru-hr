@@ -3040,6 +3040,7 @@ ${a.adm3By ? `<div class="tl-sub" style="margin-top:5px">โดย ${a.adm3By}</
       renderExec();
       renderHistory();
       renderOfferAdm();
+      renderExecInterested();
     }
 
     async function doUploadNext(id) {
@@ -3053,8 +3054,7 @@ ${a.adm3By ? `<div class="tl-sub" style="margin-top:5px">โดย ${a.adm3By}</
     async function doHR(id) {
       const note = document.getElementById('hr-ta')?.value || '';
       const checker = document.getElementById('hr-checker')?.value.trim() || currentUser?.name || '';
-      const confirmed = await askConfirm('ตรวจสอบข้อมูลก่อนยืนยัน', { title: 'ดำเนินการต่อ', okText: 'ส่งเลย' });
-      if (!confirmed) return;
+      const confirmed = await askConfirm('ยืนยันส่งผู้สมัครนัดสัมภาษณ์?', { title: 'ส่งนัดสัมภาษณ์', okText: 'ส่งเลย' }); if (!confirmed) return;
       const ok = await dbUpdate(id, { hrNote: note, step: 4, hrBy: checker });
       if (ok) { showToast('ส่งนัดสัมภาษณ์แล้ว'); await rerender(id); }
       renderExec();
@@ -3975,7 +3975,11 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
 
     function renderHistory() {
       const q = (document.getElementById('hist-search')?.value || '').trim();
-      let list = DATA.filter(a => a.deletedAdmin !== true && (a.name.includes(q) || a.pos.includes(q)));
+      let list = DATA.filter(a =>
+        a.deletedAdmin !== true &&
+        a.step >= 4 &&
+        (a.name.includes(q) || a.pos.includes(q))
+      );
       if (histFilter === 'active') list = list.filter(a => !a.closed && a.step < 9);
       if (histFilter === 'hired') list = list.filter(a => a.step >= 9 && a.offerResult === 'accepted' && !a.closed);
       if (histFilter === 'closed') list = list.filter(a => a.closed);

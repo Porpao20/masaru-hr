@@ -2229,6 +2229,8 @@
           <div class="of2-filter-chip" data-lf="s4" onclick="setListFilter('s4')">นัดสัมภาษณ์</div>
           <div class="of2-filter-chip" data-lf="s5" onclick="setListFilter('s5')">บันทึกผลสัมภาษณ์</div>
           <div class="of2-filter-chip" data-lf="s6" onclick="setListFilter('s6')">รอผู้บริหาร</div>
+          <div class="of2-filter-chip" data-lf="s7" onclick="setListFilter('s7')">เตรียม Offer</div>
+          <div class="of2-filter-chip" data-lf="waiting" onclick="setListFilter('waiting')">รอผู้สมัครตอบรับ</div>
           <div class="of2-filter-chip" data-lf="hired" onclick="setListFilter('hired')">รับเข้าทำงาน</div>
           <div class="of2-filter-chip" data-lf="closed" onclick="setListFilter('closed')">ปิดเคส</div>
         </div>
@@ -2368,6 +2370,7 @@
         </div>
         <div style="display:flex;gap:5px;padding:8px 10px;flex-wrap:wrap;border-bottom:1px solid #f0ede8">
           <div class="of2-filter-chip on" data-hf="all" onclick="setHistFilter('all')">ทั้งหมด</div>
+          <div class="of2-filter-chip" data-hf="pre-int" onclick="setHistFilter('pre-int')">ก่อนสัมภาษณ์</div>
           <div class="of2-filter-chip" data-hf="active" onclick="setHistFilter('active')">กำลังดำเนินการ</div>
           <div class="of2-filter-chip" data-hf="hired" onclick="setHistFilter('hired')">รับเข้าทำงาน</div>
           <div class="of2-filter-chip" data-hf="closed" onclick="setHistFilter('closed')">ปิดเคส</div>
@@ -2769,8 +2772,7 @@
       if (listFilter === 's5') items = items.filter(a => !a.closed && a.step === 5);
       if (listFilter === 's6') items = items.filter(a => !a.closed && a.step === 6);
       if (listFilter === 's7') items = items.filter(a => !a.closed && a.step === 7);
-      if (listFilter === 's8') items = items.filter(a => !a.closed && a.step === 8);
-      if (listFilter === 'hired') items = items.filter(a => a.step >= 9 && !a.closed);
+      if (listFilter === 'waiting') items = items.filter(a => !a.closed && a.step >= 9 && !a.offerResult); if (listFilter === 's8') items = items.filter(a => !a.closed && a.step === 8);
       if (listFilter === 'hired') items = items.filter(a => a.step >= 9 && a.offerResult === 'accepted' && !a.closed);
       if (listFilter === 'closed') items = items.filter(a => a.closed);
       renderList(items);
@@ -3980,8 +3982,7 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
         a.step >= 4 &&
         (a.name.includes(q) || a.pos.includes(q))
       );
-      if (histFilter === 'active') list = list.filter(a => !a.closed && a.step < 9);
-      if (histFilter === 'hired') list = list.filter(a => a.step >= 9 && a.offerResult === 'accepted' && !a.closed);
+      if (histFilter === 'pre-int') list = list.filter(a => !a.closed && a.step >= 4 && a.step <= 5); if (histFilter === 'active') list = list.filter(a => !a.closed && a.step < 9); if (histFilter === 'hired') list = list.filter(a => a.step >= 9 && a.offerResult === 'accepted' && !a.closed);
       if (histFilter === 'closed') list = list.filter(a => a.closed);
 
       const el = document.getElementById('history-alist');

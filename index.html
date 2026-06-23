@@ -2869,7 +2869,7 @@ ${a.hrBy ? `<div class="tl-sub" style="margin-top:5px"><i class="ti ti-user-chec
   <label style="font-size:11.5px;color:#5f5e5a;font-weight:500"><i class="ti ti-user-check" style="font-size:12px;margin-right:3px;vertical-align:-1px;color:#1d9e75"></i>ชื่อผู้ตรวจ</label>
   <input type="text" id="hr-checker" value="${currentUser?.name || ''}" placeholder="ชื่อผู้ตรวจ" style="padding:7px 9px;border:1px solid #d3d1c7;border-radius:7px;font-size:12px;font-family:inherit;color:#2c2c2a;outline:none;background:#fff;transition:border-color .12s" onfocus="this.style.borderColor='#1d9e75'" onblur="this.style.borderColor='#d3d1c7'">
 </div>
-<textarea class="tl-in" id="hr-ta" placeholder="ประเมินเรซูเม่ · บันทึกความเห็น">${draft}</textarea>
+<textarea class="tl-in" id="hr-ta" placeholder="ประเมินเรซูเม่ · บันทึกความเห็น" oninput="(function(v){const a=getA(${a.id});if(a)a.hrDraft=v;})(this.value)">${draft}</textarea>
 <div style="font-size:11px;color:#aaa;margin-top:3px">ร่างถูกบันทึกอัตโนมัติ</div>
 <div class="acts">
   <button class="btn btn-r" onclick="doClose(${a.id},'ไม่ผ่าน HR')">ไม่ผ่าน</button>
@@ -3112,7 +3112,19 @@ ${a.adm3By ? `<div class="tl-sub" style="margin-top:5px">โดย ${a.adm3By}</
     async function saveHRDraft(id) {
       const note = document.getElementById('hr-ta')?.value || '';
       const ok = await dbUpdate(id, { hrDraft: note });
-      if (ok) showToast('บันทึกร่างแล้ว');
+      if (ok) {
+        // อัปเดต local cache ทันที เพื่อกัน realtime overwrite
+        const a = getA(id);
+        if (a) a.hrDraft = note;
+        // inline feedback บนปุ่ม
+        const btn = document.querySelector(`[onclick="saveHRDraft(${id})"]`);
+        if (btn) {
+          const orig = btn.innerHTML;
+          btn.innerHTML = '<i class="ti ti-check" style="font-size:12px;margin-right:3px"></i>บันทึกแล้ว ✓';
+          btn.style.color = '#1d9e75'; btn.style.borderColor = '#cbe6da';
+          setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; btn.style.borderColor = ''; }, 2000);
+        }
+      }
     }
 
     async function doUploadNext(id) {

@@ -2593,6 +2593,7 @@
         deletedAdmin: r.deleted_admin === true,
         hrSalary: r.hr_salary || '',
         execInterested: r.exec_interested === true,
+        hrDraft: r.hr_draft || '',
       };
     }
 
@@ -2679,6 +2680,7 @@
         hrSalary: 'hr_salary',
         execInterested: 'exec_interested',
         name: 'name',
+        hrDraft: 'hr_draft',
       };
       const payload = {};
       for (const [k, v] of Object.entries(fields)) {
@@ -2862,16 +2864,16 @@ ${a.resumeUrl ? `<a href="${a.resumeUrl}" target="_blank" class="btn btn-downloa
               body = `${a.hrNote ? `<div class="tl-note">${a.hrNote}</div>` : ''}
 ${a.hrBy ? `<div class="tl-sub" style="margin-top:5px"><i class="ti ti-user-check" style="font-size:11px;margin-right:3px;color:#1d9e75"></i>ตรวจโดย ${a.hrBy}</div>` : ''}`;
             } else {
-              const draft = a.hrNote || localStorage.getItem('hr-draft-' + a.id) || '';
+              const draft = a.hrNote || a.hrDraft || '';
               body = `<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px">
   <label style="font-size:11.5px;color:#5f5e5a;font-weight:500"><i class="ti ti-user-check" style="font-size:12px;margin-right:3px;vertical-align:-1px;color:#1d9e75"></i>ชื่อผู้ตรวจ</label>
   <input type="text" id="hr-checker" value="${currentUser?.name || ''}" placeholder="ชื่อผู้ตรวจ" style="padding:7px 9px;border:1px solid #d3d1c7;border-radius:7px;font-size:12px;font-family:inherit;color:#2c2c2a;outline:none;background:#fff;transition:border-color .12s" onfocus="this.style.borderColor='#1d9e75'" onblur="this.style.borderColor='#d3d1c7'">
 </div>
-<textarea class="tl-in" id="hr-ta" placeholder="ประเมินเรซูเม่ · บันทึกความเห็น" oninput="localStorage.setItem('hr-draft-${a.id}',this.value)">${draft}</textarea>
+<textarea class="tl-in" id="hr-ta" placeholder="ประเมินเรซูเม่ · บันทึกความเห็น">${draft}</textarea>
 <div style="font-size:11px;color:#aaa;margin-top:3px">ร่างถูกบันทึกอัตโนมัติ</div>
 <div class="acts">
   <button class="btn btn-r" onclick="doClose(${a.id},'ไม่ผ่าน HR')">ไม่ผ่าน</button>
-<button class="btn" onclick="localStorage.setItem('hr-draft-${a.id}',document.getElementById('hr-ta').value);showToast('บันทึกร่างแล้ว')"><i class="ti ti-device-floppy" style="font-size:12px;margin-right:3px"></i>บันทึกร่าง</button>
+<button class="btn" onclick="saveHRDraft(${a.id})"><i class="ti ti-device-floppy" style="font-size:12px;margin-right:3px"></i>บันทึกร่าง</button>
 <button class="btn btn-g" onclick="localStorage.removeItem('hr-draft-${a.id}');doHR(${a.id})">ส่งนัดสัมภาษณ์ ✓</button>
 </div>`;
             }
@@ -3107,6 +3109,12 @@ ${a.adm3By ? `<div class="tl-sub" style="margin-top:5px">โดย ${a.adm3By}</
       if (ok) { showToast('แก้ไขชื่อแล้ว'); await rerender(id); }
     }
 
+    async function saveHRDraft(id) {
+      const note = document.getElementById('hr-ta')?.value || '';
+      const ok = await dbUpdate(id, { hrDraft: note });
+      if (ok) showToast('บันทึกร่างแล้ว');
+    }
+
     async function doUploadNext(id) {
       const ok2 = await askConfirm('ยืนยันส่งให้ HR คัดกรอง?', { title: 'ส่ง HR คัดกรอง', okText: 'ส่งเลย' });
       if (!ok2) return;
@@ -3119,7 +3127,7 @@ ${a.adm3By ? `<div class="tl-sub" style="margin-top:5px">โดย ${a.adm3By}</
       const note = document.getElementById('hr-ta')?.value || '';
       const checker = document.getElementById('hr-checker')?.value.trim() || currentUser?.name || '';
       const confirmed = await askConfirm('ยืนยันส่งผู้สมัครนัดสัมภาษณ์?', { title: 'ส่งนัดสัมภาษณ์', okText: 'ส่งเลย' }); if (!confirmed) return;
-      const ok = await dbUpdate(id, { hrNote: note, step: 4, hrBy: checker });
+      const ok = await dbUpdate(id, { hrNote: note, hrDraft: '', step: 4, hrBy: checker });
       if (ok) { showToast('ส่งนัดสัมภาษณ์แล้ว'); await rerender(id); }
       renderExec();
     }
@@ -3322,7 +3330,7 @@ ${a.adm3By ? `<div class="tl-sub" style="margin-top:5px">โดย ${a.adm3By}</
         || document.getElementById('adm-note-' + id)?.value
         || document.getElementById('adm1-ta')?.value
         || '';
-      const fields = { closed: true, closeR: r };
+      const fields = { closed: true, closeR: r, hrDraft: '' };
       if (note) fields.adm3Note = note;
       const ok = await dbUpdate(id, fields);
       if (ok) { showToast('ปิดเคสแล้ว'); await rerender(id); }

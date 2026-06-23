@@ -2268,23 +2268,54 @@
           <div class="fg"><label>ตำแหน่งที่สมัคร <span>*</span></label>
             <select id="u-pos">
               <option value="">-- เลือกตำแหน่ง --</option>
-              <option>เลขานุการ</option>
-              <option>หัวหน้าบัญชี</option>
-              <option>หัวหน้าคลัง</option>
-              <option>เซลส์ขายส่ง</option>
-              <option>KOL Specialist</option>
-              <option>HR Manager</option>
-              <option>Content Creator</option>
-              <option>E-Commerce Manager</option>
-              <option>Facebook Marketing</option>
+              <optgroup label="Customer Service">
+                <option>CS ประสานงาน</option>
+                <option>CS Facebook</option>
+                <option>Support Facebook</option>
+              </optgroup>
+              <optgroup label="การตลาด">
+                <option>การตลาด Facebook</option>
+                <option>การตลาดออนไลน์</option>
+                <option>KOL Specialist</option>
+                <option>Branding</option>
+                <option>Live</option>
+                <option>Content Creator</option>
+                <option>Graphic Design</option>
+              </optgroup>
+              <optgroup label="Sales">
+                <option>Sale Wholesale ขายส่ง</option>
+                <option>Add-order</option>
+                <option>Telesale</option>
+                <option>Sale Admin</option>
+              </optgroup>
+              <optgroup label="จัดซื้อ">
+                <option>Purchasing จัดซื้อต่างประเทศ</option>
+                <option>Purchasing จัดซื้อในประเทศ</option>
+              </optgroup>
+              <optgroup label="บัญชี / การเงิน">
+                <option>Accountant</option>
+                <option>Internal Auditor</option>
+              </optgroup>
+              <optgroup label="HR / IT">
+                <option>Human Resources</option>
+                <option>IT Support</option>
+              </optgroup>
+              <optgroup label="หัวหน้าฝ่าย">
+                <option>หัวหน้าฝ่ายบุคคล</option>
+                <option>หัวหน้าการตลาด</option>
+                <option>หัวหน้าบัญชี</option>
+                <option>หัวหน้าคลังสินค้า</option>
+              </optgroup>
             </select>
           </div>
           <div class="fg"><label>แหล่งที่มา</label>
             <select id="u-src">
               <option value="">-- เลือก --</option>
               <option>Jobthai</option>
+              <option>Jobbkk</option>
               <option>Facebook</option>
               <option>Walk-in</option>
+              <option>อื่นๆ</option>
             </select>
           </div>
         </div>
@@ -2869,7 +2900,8 @@ ${a.hrBy ? `<div class="tl-sub" style="margin-top:5px"><i class="ti ti-user-chec
   <label style="font-size:11.5px;color:#5f5e5a;font-weight:500"><i class="ti ti-user-check" style="font-size:12px;margin-right:3px;vertical-align:-1px;color:#1d9e75"></i>ชื่อผู้ตรวจ</label>
   <input type="text" id="hr-checker" value="${currentUser?.name || ''}" placeholder="ชื่อผู้ตรวจ" style="padding:7px 9px;border:1px solid #d3d1c7;border-radius:7px;font-size:12px;font-family:inherit;color:#2c2c2a;outline:none;background:#fff;transition:border-color .12s" onfocus="this.style.borderColor='#1d9e75'" onblur="this.style.borderColor='#d3d1c7'">
 </div>
-<textarea class="tl-in" id="hr-ta" placeholder="ประเมินเรซูเม่ · บันทึกความเห็น" oninput="(function(v){const a=getA(${a.id});if(a)a.hrDraft=v;})(this.value)">${draft}</textarea>
+<textarea class="tl-in" id="hr-ta" placeholder="ประเมินเรซูเม่ · บันทึกความเห็น" oninput="(function(v){const a=getA(${a.id});if(a)a.hrDraft=v;})(this.value)"
+>${draft}</textarea>
 <div style="font-size:11px;color:#aaa;margin-top:3px">ร่างถูกบันทึกอัตโนมัติ</div>
 <div class="acts">
   <button class="btn btn-r" onclick="doClose(${a.id},'ไม่ผ่าน HR')">ไม่ผ่าน</button>
@@ -3113,10 +3145,24 @@ ${a.adm3By ? `<div class="tl-sub" style="margin-top:5px">โดย ${a.adm3By}</
       const note = document.getElementById('hr-ta')?.value || '';
       const ok = await dbUpdate(id, { hrDraft: note });
       if (ok) {
-        // อัปเดต local cache ทันที เพื่อกัน realtime overwrite
+        // อัพเดท local cache
         const a = getA(id);
         if (a) a.hrDraft = note;
-        // inline feedback บนปุ่ม
+
+        // Re-render detail แล้ว restore ค่า textarea กลับทันที
+        if (a) {
+          const savedNote = note; // capture ก่อน re-render
+          renderDetail(a);
+          // หลัง renderDetail สร้าง textarea ใหม่ → restore ค่าเดิมกลับ
+          const ta = document.getElementById('hr-ta');
+          if (ta) {
+            ta.value = savedNote;
+            // restore cursor ไว้ท้าย
+            ta.setSelectionRange(savedNote.length, savedNote.length);
+          }
+        }
+
+        // feedback บนปุ่ม (ต้อง query ใหม่หลัง re-render)
         const btn = document.querySelector(`[onclick="saveHRDraft(${id})"]`);
         if (btn) {
           const orig = btn.innerHTML;
@@ -3763,9 +3809,25 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
             // re-render detail เฉพาะตอนที่ไม่ได้ focus textarea/input
             const active = document.activeElement;
             const isTyping = active && (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT');
-            if (selId && !isTyping) {
+            if (selId) {
               const a = getA(selId);
-              if (a) renderDetail(a);
+              if (a) {
+                if (!isTyping) {
+                  // ไม่ได้พิมพ์อยู่ → re-render ปกติ
+                  renderDetail(a);
+                } else {
+                  // กำลังพิมพ์อยู่ → preserve ค่า input/textarea แล้วค่อย render
+                  const activeId = active.id;
+                  const activeVal = active.value;
+                  renderDetail(a);
+                  // restore ค่าที่พิมพ์อยู่กลับ
+                  const restored = document.getElementById(activeId);
+                  if (restored) {
+                    restored.value = activeVal;
+                    restored.focus();
+                  }
+                }
+              }
             }
             if (selOAId && !isTyping) {
               const a = getA(selOAId);

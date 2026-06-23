@@ -3952,7 +3952,7 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
 
     function renderOAHistory(a) {
       const rows = [
-        { icon: 'ti-user-check', color: '#378add', bg: '#e6f1fb', lbl: 'HR คัดกรอง', val: a.hrBy ? `โดย ${a.hrBy}` : (a.hrNote ? 'บันทึกแล้ว' : '—'), sub: a.hrNote || '' },
+        { icon: 'ti-user-check', color: '#378add', bg: '#e6f1fb', lbl: 'HR คัดกรอง', val: a.step >= 2 ? (a.hrBy ? `โดย ${a.hrBy}` : 'บันทึกแล้ว') : '—', sub: a.step >= 2 ? (a.hrNote || '') : '' },
         { icon: 'ti-calendar', color: '#1d9e75', bg: '#e1f5ee', lbl: 'นัดสัมภาษณ์', val: a.intDate ? `${a.intDate} เวลา ${a.intTime} น.` : '—', sub: a.intBy ? `ผู้สัมภาษณ์: ${a.intBy}` : '' },
         { icon: 'ti-clipboard-list', color: '#378add', bg: '#e6f1fb', lbl: 'ผลสัมภาษณ์', val: a.hrRes === 'pass' ? '✓ ผ่าน' : a.hrRes === 'fail' ? '✗ ไม่ผ่าน' : '—', sub: [a.hrResDet, a.hrSalary ? `💰 HR ตกลงเงินเดือน: ${a.hrSalary} บาท` : ''].filter(Boolean).join(' · ') },
         { icon: 'ti-circle-check', color: '#ba7517', bg: '#faeeda', lbl: 'ผู้บริหารอนุมัติรับเข้าทำงาน', val: a.adm2By ? `โดย ${a.adm2By}` : (a.adm2 ? 'อนุมัติแล้ว' : '—'), sub: a.adm2 || '' },
@@ -3994,6 +3994,7 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
       const q = (document.getElementById('hist-search')?.value || '').trim();
       let list = DATA.filter(a =>
         a.deletedAdmin !== true &&
+        a.step >= 4 &&
         (a.name.includes(q) || a.pos.includes(q))
       );
       if (histFilter === 'pre-int') list = list.filter(a => !a.closed && a.step <= 5); if (histFilter === 'active') list = list.filter(a => !a.closed && a.step < 9); if (histFilter === 'hired') list = list.filter(a => a.step >= 9 && a.offerResult === 'accepted' && !a.closed);
@@ -4059,13 +4060,41 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
       else statusBadge = '<span class="badge b-ok">กำลังดำเนินการ</span>';
 
       const rows = [
-        { icon: 'ti-user-check', color: '#378add', bg: '#e6f1fb', lbl: 'HR คัดกรอง', val: a.hrBy ? `โดย ${a.hrBy}` : (a.hrNote ? 'บันทึกแล้ว' : '—'), sub: a.hrNote || '' },
-        { icon: 'ti-calendar', color: '#1d9e75', bg: '#e1f5ee', lbl: 'นัดสัมภาษณ์', val: a.intDate ? `${a.intDate}  ${a.intTime} น.` : '—', sub: a.intBy ? `ผู้สัมภาษณ์: ${a.intBy}` : '' },
-        { icon: 'ti-clipboard-list', color: '#378add', bg: '#e6f1fb', lbl: 'ผลสัมภาษณ์', val: a.hrRes === 'pass' ? '✓ ผ่าน' : a.hrRes === 'fail' ? '✗ ไม่ผ่าน' : '—', sub: a.hrResDet || '' },
-        { icon: 'ti-circle-check', color: '#ba7517', bg: '#faeeda', lbl: 'ผู้บริหารอนุมัติรับเข้าทำงาน', val: a.adm2By ? `โดย ${a.adm2By}` : (a.adm2 ? 'อนุมัติแล้ว' : '—'), sub: a.adm2 || '' },
-        { icon: 'ti-briefcase', color: '#0f6e56', bg: '#e1f5ee', lbl: 'เงินเดือน / วันเริ่มงาน', val: a.salary ? `${a.salary} บาท` : '—', sub: a.startDate ? `เริ่มงาน: ${a.startDate} · ${a.employmentType || 'พนักงานประจำ'}` : '' },
-        { icon: 'ti-send', color: '#0c447c', bg: '#e6f1fb', lbl: 'ส่ง Offer Letter', val: a.offerSentAt ? `${a.offerSentAt} · ${a.offerChannel || 'Email'}` : '—', sub: a.offerEmail ? `📧 ${a.offerEmail}` : '' },
-        { icon: 'ti-user-check', color: '#27500a', bg: '#eaf3de', lbl: 'ผู้สมัครตอบรับ', val: a.offerResult === 'accepted' ? '✓ ตอบรับ' : a.offerResult === 'rejected' ? '✗ ปฏิเสธ' : '—', sub: a.candidateRespondedAt || '' },
+        {
+          icon: 'ti-user-check', color: '#378add', bg: '#e6f1fb', lbl: 'HR คัดกรอง',
+          val: a.step >= 2 ? (a.hrBy ? `โดย ${a.hrBy}` : 'บันทึกแล้ว') : '—',
+          sub: a.step >= 2 ? (a.hrNote || '') : ''
+        },
+        {
+          icon: 'ti-calendar', color: '#1d9e75', bg: '#e1f5ee', lbl: 'นัดสัมภาษณ์',
+          val: a.step >= 4 && a.intDate ? `${a.intDate}  ${a.intTime} น.` : '—',
+          sub: a.step >= 4 && a.intBy ? `ผู้สัมภาษณ์: ${a.intBy}` : ''
+        },
+        {
+          icon: 'ti-clipboard-list', color: '#378add', bg: '#e6f1fb', lbl: 'ผลสัมภาษณ์',
+          val: a.step >= 5 ? (a.hrRes === 'pass' ? '✓ ผ่าน' : a.hrRes === 'fail' ? '✗ ไม่ผ่าน' : '—') : '—',
+          sub: a.step >= 5 ? (a.hrResDet || '') : ''
+        },
+        {
+          icon: 'ti-circle-check', color: '#ba7517', bg: '#faeeda', lbl: 'ผู้บริหารอนุมัติรับเข้าทำงาน',
+          val: a.step >= 7 ? (a.adm2By ? `โดย ${a.adm2By}` : (a.adm2 ? 'อนุมัติแล้ว' : '—')) : '—',
+          sub: a.step >= 7 ? (a.adm2 || '') : ''
+        },
+        {
+          icon: 'ti-briefcase', color: '#0f6e56', bg: '#e1f5ee', lbl: 'เงินเดือน / วันเริ่มงาน',
+          val: a.step >= 7 && a.salary ? `${a.salary} บาท` : '—',
+          sub: a.step >= 7 && a.startDate ? `เริ่มงาน: ${a.startDate} · ${a.employmentType || 'พนักงานประจำ'}` : ''
+        },
+        {
+          icon: 'ti-send', color: '#0c447c', bg: '#e6f1fb', lbl: 'ส่ง Offer Letter',
+          val: a.step >= 9 && a.offerSentAt ? `${a.offerSentAt} · ${a.offerChannel || 'Email'}` : '—',
+          sub: a.step >= 9 && a.offerEmail ? `📧 ${a.offerEmail}` : ''
+        },
+        {
+          icon: 'ti-user-check', color: '#27500a', bg: '#eaf3de', lbl: 'ผู้สมัครตอบรับ',
+          val: a.step >= 9 ? (a.offerResult === 'accepted' ? '✓ ตอบรับ' : a.offerResult === 'rejected' ? '✗ ปฏิเสธ' : '—') : '—',
+          sub: a.step >= 9 ? (a.candidateRespondedAt || '') : ''
+        }
       ];
 
       const tlHtml = rows.map((r, idx) => {

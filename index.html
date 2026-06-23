@@ -2460,6 +2460,10 @@
       if (!d) return '';
       try { return new Date(d).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' }) } catch { return d }
     }
+    function resumeBtnHtml(a) {
+      if (!a.resumeUrl) return '';
+      return `<a href="${a.resumeUrl}" target="_blank" class="btn-download" style="padding:5px 11px;border-radius:7px;font-size:12px;font-family:inherit;cursor:pointer;border:1px solid #cbe6da;background:#e1f5ee;color:#085041;display:flex;align-items:center;gap:5px;text-decoration:none;pointer-events:auto!important;opacity:1!important"><i class="ti ti-file-download" style="font-size:13px"></i>ดูเรซูเม่</a>`;
+    }
     function showToast(msg, err = false) {
       const t = document.getElementById('toast');
       t.textContent = (err ? '✗ ' : '✓ ') + msg;
@@ -3007,7 +3011,7 @@ ${a.adm3By ? `<div class="tl-sub" style="margin-top:5px">โดย ${a.adm3By}</
       }
 
       dp.innerHTML = `
-    <div class="dh"><div class="dh-name">${a.name}</div><div style="display:flex;align-items:center;gap:8px">${badgeHtml(a)}${!a.closed ? `<button style="padding:5px 11px;border-radius:7px;font-size:12px;font-family:inherit;cursor:pointer;border:1px solid #f0d090;background:#faeeda;color:#633806;display:flex;align-items:center;gap:5px;pointer-events:auto!important;opacity:1!important" onclick="doWithdraw(${a.id})"><i class="ti ti-user-x" style="font-size:13px"></i>ผู้สมัครยกเลิกกระทันหัน</button>` : ''}${(a.closed || a.step >= 9) ? `<button style="padding:5px 11px;border-radius:7px;font-size:12px;font-family:inherit;cursor:pointer;border:1px solid #f4c0d1;background:#fbeaf0;color:#72243e;display:flex;align-items:center;gap:5px;pointer-events:auto!important;opacity:1!important" onclick="doDelete(${a.id})"><i class="ti ti-trash" style="font-size:13px"></i>ลบ</button>` : ''}</div></div>
+    <div class="dh"><div class="dh-name">${a.name}</div><div style="display:flex;align-items:center;gap:8px">${resumeBtnHtml(a)}${badgeHtml(a)}${!a.closed ? `<button style="padding:5px 11px;border-radius:7px;font-size:12px;font-family:inherit;cursor:pointer;border:1px solid #f0d090;background:#faeeda;color:#633806;display:flex;align-items:center;gap:5px;pointer-events:auto!important;opacity:1!important" onclick="doWithdraw(${a.id})"><i class="ti ti-user-x" style="font-size:13px"></i>ผู้สมัครยกเลิกกระทันหัน</button>` : ''}${(a.closed || a.step >= 9) ? `<button style="padding:5px 11px;border-radius:7px;font-size:12px;font-family:inherit;cursor:pointer;border:1px solid #f4c0d1;background:#fbeaf0;color:#72243e;display:flex;align-items:center;gap:5px;pointer-events:auto!important;opacity:1!important" onclick="doDelete(${a.id})"><i class="ti ti-trash" style="font-size:13px"></i>ลบ</button>` : ''}</div></div>
 
     <div class="db">
       <div class="meta-card">
@@ -3380,6 +3384,7 @@ ${a.adm3By ? `<div class="tl-sub" style="margin-top:5px">โดย ${a.adm3By}</
       <div class="adm-top">
         <div><div class="adm-name">${a.name}</div><div class="adm-pos">${a.pos} · ${a.date}</div></div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          ${resumeBtnHtml(a)}
           <span class="rb ${a.step === 3 ? 'rb1' : 'rb2'}">รอ</span>
           <span style="font-size:10px;color:#888780">${a.step === 3 ? 'อนุมัติสัมภาษณ์' : 'อนุมัติรับเข้าทำงาน'}</span>
         </div>
@@ -3574,6 +3579,7 @@ ${a.step === 6 ? `
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
+        ${resumeBtnHtml(a)}
         ${offerStatusBadge(status)}
 <button style="padding:5px 11px;border-radius:7px;font-size:12px;font-family:inherit;cursor:pointer;border:1px solid #f0d090;background:#faeeda;color:#633806;display:flex;align-items:center;gap:5px" onclick="doWithdraw(${a.id})"><i class="ti ti-user-x" style="font-size:13px"></i>ยกเลิกกะทันหัน</button>
       </div>
@@ -3889,7 +3895,7 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
               <div class="of2-dh-pos">${a.pos} · ${a.src || '-'}</div>
             </div>
           </div>
-      <div style="display:flex;align-items:center;gap:8px">${stBadgeHtml}</div>
+<div style="display:flex;align-items:center;gap:8px">${resumeBtnHtml(a)}${stBadgeHtml}</div>
         </div>
         <div style="display:flex;gap:0;border-bottom:1px solid #e8e6e0;background:#fff;flex-shrink:0">
           <div id="oa-tab-offer" onclick="switchOATab('offer',${a.id})" style="padding:10px 18px;font-size:12.5px;font-weight:500;cursor:pointer;border-bottom:2px solid #1d9e75;color:#0f6e56">อนุมัติ Offer</div>
@@ -3979,10 +3985,9 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
       const q = (document.getElementById('hist-search')?.value || '').trim();
       let list = DATA.filter(a =>
         a.deletedAdmin !== true &&
-        a.step >= 4 &&
         (a.name.includes(q) || a.pos.includes(q))
       );
-      if (histFilter === 'pre-int') list = list.filter(a => !a.closed && a.step >= 4 && a.step <= 5); if (histFilter === 'active') list = list.filter(a => !a.closed && a.step < 9); if (histFilter === 'hired') list = list.filter(a => a.step >= 9 && a.offerResult === 'accepted' && !a.closed);
+      if (histFilter === 'pre-int') list = list.filter(a => !a.closed && a.step <= 5); if (histFilter === 'active') list = list.filter(a => !a.closed && a.step < 9); if (histFilter === 'hired') list = list.filter(a => a.step >= 9 && a.offerResult === 'accepted' && !a.closed);
       if (histFilter === 'closed') list = list.filter(a => a.closed);
 
       const el = document.getElementById('history-alist');
@@ -4092,7 +4097,8 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
               <div class="of2-dh-pos">${a.pos} · ${a.src || '-'}${a.phone ? ' · ' + a.phone : ''}</div>
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:8px">
+        <div style="display:flex;align-items:center;gap:8px">
+            ${resumeBtnHtml(a)}
             ${statusBadge}
           ${!a.closed && a.step >= 4 && a.step < 6 && !a.execInterested
           ? `<button class="btn-exec-interest" style="padding:5px 11px;border-radius:7px;font-size:12px;font-family:inherit;cursor:pointer;border:1px solid #cbe6da;background:#e1f5ee;color:#085041;display:flex;align-items:center;gap:5px;pointer-events:auto!important;opacity:1!important" onclick="doExecInterest(${a.id})"><i class="ti ti-star" style="font-size:13px"></i>สนใจสัมภาษณ์</button>` : ''}

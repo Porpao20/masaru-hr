@@ -751,7 +751,21 @@
       font-size: 13px;
       font-weight: 500;
       z-index: 999;
-      display: none
+      display: none;
+      box-shadow: 0 4px 16px rgba(29, 158, 117, .35);
+      animation: toastIn .2s ease
+    }
+
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translateY(-8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
     }
 
     .toast.err {
@@ -2469,7 +2483,7 @@
       t.textContent = (err ? '✗ ' : '✓ ') + msg;
       t.className = 'toast' + (err ? ' err' : '');
       t.style.display = 'block';
-      setTimeout(() => t.style.display = 'none', 2800);
+      setTimeout(() => t.style.display = 'none', 3500);
     }
 
     async function dbLoadExec() {
@@ -2664,6 +2678,7 @@
         deletedAdmin: 'deleted_admin',
         hrSalary: 'hr_salary',
         execInterested: 'exec_interested',
+        name: 'name',
       };
       const payload = {};
       for (const [k, v] of Object.entries(fields)) {
@@ -2766,6 +2781,28 @@
       listFilter = f;
       document.querySelectorAll('[data-lf]').forEach(c => c.classList.toggle('on', c.dataset.lf === f));
       filterA(document.querySelector('#list-col .sb input')?.value || '');
+      updateListCounts();
+    }
+
+    function updateListCounts() {
+      const base = DATA;
+      const counts = {
+        all: base.length,
+        s1: base.filter(a => !a.closed && a.step === 1).length,
+        s2: base.filter(a => !a.closed && a.step === 2).length,
+        s4: base.filter(a => !a.closed && a.step === 4).length,
+        s5: base.filter(a => !a.closed && a.step === 5).length,
+        s6: base.filter(a => !a.closed && a.step === 6).length,
+        s7: base.filter(a => !a.closed && a.step === 7).length,
+        waiting: base.filter(a => !a.closed && a.step >= 9 && !a.offerResult).length,
+        hired: base.filter(a => a.step >= 9 && a.offerResult === 'accepted' && !a.closed).length,
+        closed: base.filter(a => a.closed).length,
+      };
+      document.querySelectorAll('[data-lf]').forEach(c => {
+        const f = c.dataset.lf;
+        const n = counts[f] ?? 0;
+        c.textContent = c.textContent.replace(/\s*\(\d+\)$/, '') + (n > 0 ? ` (${n})` : '');
+      });
     }
 
     function filterA(q) {
@@ -2834,7 +2871,7 @@ ${a.hrBy ? `<div class="tl-sub" style="margin-top:5px"><i class="ti ti-user-chec
 <div style="font-size:11px;color:#aaa;margin-top:3px">ร่างถูกบันทึกอัตโนมัติ</div>
 <div class="acts">
   <button class="btn btn-r" onclick="doClose(${a.id},'ไม่ผ่าน HR')">ไม่ผ่าน</button>
-  <button class="btn" onclick="localStorage.setItem('hr-draft-${a.id}',document.getElementById('hr-ta').value);showToast('บันทึกร่างแล้ว');document.querySelector('.dh .badge').outerHTML='<span class=\'badge b-ok\'>กำลังดำเนินการ</span>'"><i class="ti ti-device-floppy" style="font-size:12px;margin-right:3px"></i>บันทึกร่าง</button>
+<button class="btn" onclick="localStorage.setItem('hr-draft-${a.id}',document.getElementById('hr-ta').value);showToast('บันทึกร่างแล้ว')"><i class="ti ti-device-floppy" style="font-size:12px;margin-right:3px"></i>บันทึกร่าง</button>
 <button class="btn btn-g" onclick="localStorage.removeItem('hr-draft-${a.id}');doHR(${a.id})">ส่งนัดสัมภาษณ์ ✓</button>
 </div>`;
             }
@@ -3011,7 +3048,10 @@ ${a.adm3By ? `<div class="tl-sub" style="margin-top:5px">โดย ${a.adm3By}</
       }
 
       dp.innerHTML = `
-    <div class="dh"><div class="dh-name">${a.name}</div><div style="display:flex;align-items:center;gap:8px">${resumeBtnHtml(a)}${badgeHtml(a)}${!a.closed ? `<button style="padding:5px 11px;border-radius:7px;font-size:12px;font-family:inherit;cursor:pointer;border:1px solid #f0d090;background:#faeeda;color:#633806;display:flex;align-items:center;gap:5px;pointer-events:auto!important;opacity:1!important" onclick="doWithdraw(${a.id})"><i class="ti ti-user-x" style="font-size:13px"></i>ผู้สมัครยกเลิกกระทันหัน</button>` : ''}${(a.closed || a.step >= 9) ? `<button style="padding:5px 11px;border-radius:7px;font-size:12px;font-family:inherit;cursor:pointer;border:1px solid #f4c0d1;background:#fbeaf0;color:#72243e;display:flex;align-items:center;gap:5px;pointer-events:auto!important;opacity:1!important" onclick="doDelete(${a.id})"><i class="ti ti-trash" style="font-size:13px"></i>ลบ</button>` : ''}</div></div>
+    <div class="dh"><div style="display:flex;align-items:center;gap:8px">
+      <div class="dh-name" id="dh-name-${a.id}">${a.name}</div>
+      ${currentUser?.role === 'hr' ? `<button style="padding:4px 9px;border-radius:7px;font-size:11px;font-family:inherit;cursor:pointer;border:1px solid #d3d1c7;background:#fff;color:#5f5e5a;display:flex;align-items:center;gap:4px" onclick="editName(${a.id})"><i class="ti ti-pencil" style="font-size:12px"></i>แก้ไข</button>` : ''}
+    </div><div style="display:flex;align-items:center;gap:8px">${resumeBtnHtml(a)}${badgeHtml(a)}${!a.closed ? `<button style="padding:5px 11px;border-radius:7px;font-size:12px;font-family:inherit;cursor:pointer;border:1px solid #f0d090;background:#faeeda;color:#633806;display:flex;align-items:center;gap:5px;pointer-events:auto!important;opacity:1!important" onclick="doWithdraw(${a.id})"><i class="ti ti-user-x" style="font-size:13px"></i>ผู้สมัครยกเลิกกระทันหัน</button>` : ''}${(a.closed || a.step >= 9) ? `<button style="padding:5px 11px;border-radius:7px;font-size:12px;font-family:inherit;cursor:pointer;border:1px solid #f4c0d1;background:#fbeaf0;color:#72243e;display:flex;align-items:center;gap:5px;pointer-events:auto!important;opacity:1!important" onclick="doDelete(${a.id})"><i class="ti ti-trash" style="font-size:13px"></i>ลบ</button>` : ''}</div></div>
 
     <div class="db">
       <div class="meta-card">
@@ -3047,6 +3087,24 @@ ${a.adm3By ? `<div class="tl-sub" style="margin-top:5px">โดย ${a.adm3By}</
       renderHistory();
       renderOfferAdm();
       renderExecInterested();
+    }
+
+    async function editName(id) {
+      const a = getA(id);
+      if (!a) return;
+      const el = document.getElementById('dh-name-' + id);
+      if (!el) return;
+      el.innerHTML = `<input type="text" value="${a.name}" id="edit-name-input" style="padding:5px 9px;border:1.5px solid #1d9e75;border-radius:7px;font-size:14px;font-weight:600;font-family:inherit;color:#2c2c2a;outline:none;background:#fff;width:180px">
+        <button style="padding:5px 10px;border-radius:7px;font-size:12px;font-family:inherit;cursor:pointer;background:#1d9e75;color:#fff;border:none;margin-left:5px" onclick="saveName(${id})">บันทึก</button>
+        <button style="padding:5px 10px;border-radius:7px;font-size:12px;font-family:inherit;cursor:pointer;background:#fff;color:#5f5e5a;border:1px solid #d3d1c7;margin-left:4px" onclick="renderDetail(getA(${id}))">ยกเลิก</button>`;
+      document.getElementById('edit-name-input')?.focus();
+    }
+
+    async function saveName(id) {
+      const newName = document.getElementById('edit-name-input')?.value.trim();
+      if (!newName) { showToast('กรุณากรอกชื่อ', true); return; }
+      const ok = await dbUpdate(id, { name: newName });
+      if (ok) { showToast('แก้ไขชื่อแล้ว'); await rerender(id); }
     }
 
     async function doUploadNext(id) {
@@ -3652,7 +3710,11 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
       if (p === 'offer') renderOffer();
       if (p === 'rep') renderRep();
       if (p === 'offer-adm') renderOfferAdm();
-      if (p === 'history') renderHistory();
+      if (p === 'history') {
+        renderHistory(); updateHistCounts();
+        updateListCounts();
+      }
+      if (p === 'list') { renderList(); updateListCounts(); }
       if (p === 'exec-interested') renderExecInterested();
     }
 
@@ -3712,7 +3774,9 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
         { title: 'ผู้สมัครยกเลิกกะทันหัน', okText: 'ยืนยัน', danger: true }
       );
       if (!confirmed) return;
-      const ok = await dbUpdate(id, { closed: true, closeR: 'ผู้สมัครยกเลิกกะทันหัน', step: 0 }); if (ok) { showToast('บันทึกแล้ว'); await rerender(id); }
+      const targetA = DATA.find(x => x.id === id);
+      const ok = await dbUpdate(id, { closed: true, closeR: 'ผู้สมัครยกเลิกกะทันหัน', step: targetA?.step ?? 0 });
+      if (ok) { showToast('บันทึกแล้ว'); await rerender(id); }
     }
 
     async function doDelete(id) {
@@ -3729,8 +3793,9 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
       document.getElementById('offer-detail').innerHTML = '<div class="empty"><i class="ti ti-briefcase"></i>เลือกผู้สมัครเพื่อดูรายละเอียด Offer</div>';
       document.getElementById('history-detail').innerHTML = '<div class="empty"><i class="ti ti-history"></i>เลือกผู้สมัครเพื่อดูประวัติ</div>';
 
-      if (raw?.deleted_admin) {
-        // admin ลบไปแล้วก่อนหน้า + ตอนนี้ HR ก็ลบด้วย → ลบทั้งสองฝั่งแล้ว → ลบถาวรจาก Supabase
+      const targetA = DATA.find(x => x.id === id);
+      if (raw?.deleted_admin || (targetA && targetA.step < 4)) {
+        // ลบถาวรเลย: admin ลบก่อนแล้ว หรือ step < 4 (ผู้บริหารยังไม่เคยเห็น)
         const { error: delErr } = await _sb.from('applicants').delete().eq('id', id);
         if (delErr) {
           showToast('ลบถาวรไม่สำเร็จ: ' + delErr.message, true);
@@ -3738,7 +3803,7 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
           showToast('ลบข้อมูลถาวรแล้ว');
         }
       } else {
-        // ยังลบไม่ครบทั้งสองฝั่ง → ซ่อนจาก HR เท่านั้น (admin ยังเห็นได้)
+        // step >= 4 แล้ว → ผู้บริหารเคยเห็น → ซ่อนจาก HR เท่านั้น
         const ok = await dbUpdate(id, { deleted: true });
         if (!ok) return;
         showToast('ลบออกจากระบบ HR แล้ว');
@@ -3988,6 +4053,23 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
       histFilter = f;
       document.querySelectorAll('[data-hf]').forEach(c => c.classList.toggle('on', c.dataset.hf === f));
       renderHistory();
+      updateHistCounts();
+    }
+
+    function updateHistCounts() {
+      const base = DATA.filter(a => a.deletedAdmin !== true && a.step >= 4);
+      const counts = {
+        all: base.length,
+        'pre-int': base.filter(a => !a.closed && a.step >= 4 && a.step <= 5).length,
+        active: base.filter(a => !a.closed && a.step < 9).length,
+        hired: base.filter(a => a.step >= 9 && a.offerResult === 'accepted' && !a.closed).length,
+        closed: base.filter(a => a.closed).length,
+      };
+      document.querySelectorAll('[data-hf]').forEach(c => {
+        const f = c.dataset.hf;
+        const n = counts[f] ?? 0;
+        c.textContent = c.textContent.replace(/\s*\(\d+\)$/, '') + (n > 0 ? ` (${n})` : '');
+      });
     }
 
     function renderHistory() {

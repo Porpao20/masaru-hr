@@ -3719,22 +3719,31 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
       const confirmed = await askConfirm('ยืนยันการลบผู้สมัครนี้?', { title: 'ลบผู้สมัคร', okText: 'ลบ', danger: true });
       if (!confirmed) return;
 
-      await dbLoad();
-      renderList(); renderOfferAdm(); renderAdm(); renderRep(); renderExec(); renderHistory();
+      // เช็คว่าฝั่ง admin ลบไปก่อนหน้าแล้วหรือยัง
+      const { data: raw } = await _sb.from('applicants').select('deleted_admin').eq('id', id).single();
 
-      // เคลียร์ selection + panel ก่อน dbUpdate กัน race กับ realtime event
+      // เคลียร์ selection + panel ก่อน กัน race กับ realtime event
       selId = null; selOAId = null; selOfferId = null; selHistId = null;
       document.getElementById('detail').innerHTML = '<div class="empty"><i class="ti ti-user-search"></i>เลือกผู้สมัครเพื่อดูรายละเอียด</div>';
       document.getElementById('offer-adm-detail').innerHTML = '<div class="empty"><i class="ti ti-clipboard-check"></i>เลือกผู้สมัครเพื่อพิจารณา Offer</div>';
       document.getElementById('offer-detail').innerHTML = '<div class="empty"><i class="ti ti-briefcase"></i>เลือกผู้สมัครเพื่อดูรายละเอียด Offer</div>';
       document.getElementById('history-detail').innerHTML = '<div class="empty"><i class="ti ti-history"></i>เลือกผู้สมัครเพื่อดูประวัติ</div>';
 
-      const ok = await dbUpdate(id, {
-        deleted: true
-      });
-      if (!ok) return;
+      if (raw?.deleted_admin) {
+        // admin ลบไปแล้วก่อนหน้า + ตอนนี้ HR ก็ลบด้วย → ลบทั้งสองฝั่งแล้ว → ลบถาวรจาก Supabase
+        const { error: delErr } = await _sb.from('applicants').delete().eq('id', id);
+        if (delErr) {
+          showToast('ลบถาวรไม่สำเร็จ: ' + delErr.message, true);
+        } else {
+          showToast('ลบข้อมูลถาวรแล้ว');
+        }
+      } else {
+        // ยังลบไม่ครบทั้งสองฝั่ง → ซ่อนจาก HR เท่านั้น (admin ยังเห็นได้)
+        const ok = await dbUpdate(id, { deleted: true });
+        if (!ok) return;
+        showToast('ลบออกจากระบบ HR แล้ว');
+      }
 
-      showToast('ลบออกจากระบบ HR แล้ว');
       await dbLoad();
       renderList(); renderOfferAdm(); renderAdm(); renderRep(); renderExec(); renderHistory();
     }
@@ -4173,8 +4182,12 @@ ${a.phone ? `
       if (!ok) return;
 
       if (raw?.deleted) {
-        await _sb.from('applicants').delete().eq('id', id);
-        showToast('ลบข้อมูลถาวรแล้ว');
+        const { error: delErr } = await _sb.from('applicants').delete().eq('id', id);
+        if (delErr) {
+          showToast('ลบถาวรไม่สำเร็จ: ' + delErr.message, true);
+        } else {
+          showToast('ลบข้อมูลถาวรแล้ว');
+        }
       } else {
         showToast('ลบออกจากประวัติผู้บริหารแล้ว');
       }

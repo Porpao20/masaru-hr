@@ -4143,8 +4143,7 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
     }
 
     function updateHistCounts() {
-      const base = DATA.filter(a => a.deletedAdmin !== true && a.step >= 4);
-      const counts = {
+      const base = DATA.filter(a => a.deletedAdmin !== true && a.step >= 1); const counts = {
         all: base.length,
         'pre-int': base.filter(a => !a.closed && a.step >= 4 && a.step <= 5).length,
         active: base.filter(a => !a.closed && a.step < 9).length,
@@ -4162,7 +4161,7 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
       const q = (document.getElementById('hist-search')?.value || '').trim();
       let list = DATA.filter(a =>
         a.deletedAdmin !== true &&
-        a.step >= 4 &&
+        a.step >= 1 &&
         (a.name.includes(q) || a.pos.includes(q))
       );
       if (histFilter === 'pre-int') list = list.filter(a => !a.closed && a.step <= 5); if (histFilter === 'active') list = list.filter(a => !a.closed && a.step < 9); if (histFilter === 'hired') list = list.filter(a => a.step >= 9 && a.offerResult === 'accepted' && !a.closed);

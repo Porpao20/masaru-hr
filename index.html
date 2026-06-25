@@ -3880,7 +3880,7 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
       document.getElementById('history-detail').innerHTML = '<div class="empty"><i class="ti ti-history"></i>เลือกผู้สมัครเพื่อดูประวัติ</div>';
 
       const targetA = DATA.find(x => x.id === id);
-      if (raw?.deleted_admin || (targetA && targetA.step < 4)) {
+      if (raw?.deleted_admin) {
         // ลบถาวรเลย: admin ลบก่อนแล้ว หรือ step < 4 (ผู้บริหารยังไม่เคยเห็น)
         const { error: delErr } = await _sb.from('applicants').delete().eq('id', id);
         if (delErr) {
@@ -4305,9 +4305,9 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
         <div style="display:flex;align-items:center;gap:8px">
             ${resumeBtnHtml(a)}
             ${statusBadge}
-          ${!a.closed && a.step >= 4 && a.step < 6 && !a.execInterested
+          ${!a.closed && a.step >= 1 && !a.execInterested
           ? `<button class="btn-exec-interest" style="padding:5px 11px;border-radius:7px;font-size:12px;font-family:inherit;cursor:pointer;border:1px solid #cbe6da;background:#e1f5ee;color:#085041;display:flex;align-items:center;gap:5px;pointer-events:auto!important;opacity:1!important" onclick="doExecInterest(${a.id})"><i class="ti ti-star" style="font-size:13px"></i>สนใจสัมภาษณ์</button>` : ''}
-            ${a.execInterested && !a.closed && a.step >= 4 && a.step < 6 ? `<span style="padding:5px 11px;border-radius:7px;font-size:12px;border:1px solid #cbe6da;background:#e1f5ee;color:#085041;display:flex;align-items:center;gap:5px"><i class="ti ti-star-filled" style="font-size:13px"></i>สนใจแล้ว</span>` : ''}
+            ${a.execInterested && !a.closed && a.step >= 1 ? `<span style="padding:5px 11px;border-radius:7px;font-size:12px;border:1px solid #cbe6da;background:#e1f5ee;color:#085041;display:flex;align-items:center;gap:5px"><i class="ti ti-star-filled" style="font-size:13px"></i>สนใจแล้ว</span>` : ''}
             <button style="padding:5px 11px;border-radius:7px;font-size:12px;font-family:inherit;cursor:pointer;border:1px solid #f4c0d1;background:#fbeaf0;color:#72243e;display:flex;align-items:center;gap:5px" onclick="doDeleteAdmin(${a.id})"><i class="ti ti-trash" style="font-size:13px"></i>ลบ</button>
           </div>
         </div>

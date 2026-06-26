@@ -1739,7 +1739,7 @@
       opacity: 0.6;
     }
 
-    .role-admin input[type="text"] {
+    .role-admin input[type="text"]:not(.search-input) {
       pointer-events: none;
       opacity: 0.6;
     }
@@ -2391,8 +2391,8 @@
       <div id="offer-adm-list-col">
         <div class="lh">
           <h2>อนุมัติ Offer</h2>
-          <div class="sb"><i class="ti ti-search"></i><input type="text" id="oa-search" placeholder="ค้นหา..."
-              oninput="renderOfferAdm()"></div>
+          <div class="sb"><i class="ti ti-search"></i><input type="text" id="oa-search" class="search-input"
+              placeholder="ค้นหา..." oninput="renderOfferAdm()"></div>
         </div>
         <div class="of2-filter-row" id="oa-filter-row">
           <div class="of2-filter-chip on" data-oa="all" onclick="setOAFilter('all')">ทั้งหมด</div>
@@ -2414,8 +2414,8 @@
         style="width:250px;border-right:1px solid #e8e6e0;background:#fff;display:flex;flex-direction:column;flex-shrink:0">
         <div class="lh">
           <h2>ประวัติผู้สมัคร</h2>
-          <div class="sb"><i class="ti ti-search"></i><input type="text" id="hist-search" placeholder="ค้นหา..."
-              oninput="renderHistory()"></div>
+          <div class="sb"><i class="ti ti-search"></i><input type="text" id="hist-search" class="search-input"
+              placeholder="ค้นหา..." oninput="renderHistory()"></div>
         </div>
         <div style="display:flex;gap:5px;padding:8px 10px;flex-wrap:wrap;border-bottom:1px solid #f0ede8">
           <div class="of2-filter-chip on" data-hf="all" onclick="setHistFilter('all')">ทั้งหมด</div>

@@ -2266,7 +2266,7 @@
         </div>
         <div class="fg-row">
           <div class="fg"><label>ตำแหน่งที่สมัคร <span>*</span></label>
-            <select id="u-pos">
+            <select id="u-pos" onchange="toggleOtherPos()">
               <option value="">-- เลือกตำแหน่ง --</option>
               <optgroup label="Customer Service">
                 <option>CS ประสานงาน</option>
@@ -2310,6 +2310,7 @@
                 <option>เลขา</option>
               </optgroup>
               </optgroup>
+              <option value="อื่นๆ">อื่นๆ (ระบุเอง)</option>
             </select>
           </div>
           <div class="fg"><label>แหล่งที่มา</label>
@@ -2321,6 +2322,11 @@
               <option>Walk-in</option>
               <option>อื่นๆ</option>
             </select>
+          </div>
+        </div>
+        <div class="fg-row" id="u-pos-other-row" style="display:none">
+          <div class="fg"><label>ระบุตำแหน่งเอง <span>*</span></label>
+            <input type="text" id="u-pos-other" placeholder="กรอกชื่อตำแหน่ง">
           </div>
         </div>
       </div>
@@ -2969,7 +2975,7 @@ ${a.salary ? `<div class="tl-note" style="margin-top:5px;background:#eaf3de;bord
             if (done) {
               body = `${a.adm2 ? `<div class="tl-note">${a.adm2}</div>` : ''}
 ${a.adm2By ? `<div class="tl-sub" style="margin-top:5px">โดย ${a.adm2By}</div>` : ''}`;
-            } else if (currentUser.role === 'admin') {
+            } else if (currentUser.role === 'admin' || currentUser.role === 'hr') {
               body = `<div class="tl-note" style="margin-bottom:8px;background:#e1f5ee;border-color:#cbe6da;color:#085041">
   💰 เงินเดือนที่ HR ตกลงกับผู้สมัคร: <b>${a.hrSalary ? a.hrSalary + ' บาท' : '(ไม่ได้ระบุ)'}</b>
 </div>
@@ -3245,7 +3251,7 @@ ${a.adm3By ? `<div class="tl-sub" style="margin-top:5px">โดย ${a.adm3By}</
     }
 
     async function doAdm2(id) {
-      if (currentUser?.role !== 'admin') return;
+      if (currentUser?.role !== 'admin' && currentUser?.role !== 'hr') return;
       const confirmed = await askConfirm('ยืนยันอนุมัติและเตรียม Offer?', { title: 'อนุมัติ', okText: 'อนุมัติ' });
       if (!confirmed) return;
       const note = document.getElementById('adm2-ta')?.value || '';
@@ -3259,7 +3265,7 @@ ${a.adm3By ? `<div class="tl-sub" style="margin-top:5px">โดย ${a.adm3By}</
     }
 
     async function doAdm2Return(id) {
-      if (currentUser?.role !== 'admin') return;
+      if (currentUser?.role !== 'admin' && currentUser?.role !== 'hr') return;
       const confirmed = await askConfirm('ยืนยันตีกลับให้ HR แก้ไขข้อมูล?', { title: 'ตีกลับ HR', okText: 'ตีกลับ', danger: true });
       if (!confirmed) return;
       const note = document.getElementById('adm-note-' + id)?.value || '';
@@ -3400,6 +3406,10 @@ ${a.adm3By ? `<div class="tl-sub" style="margin-top:5px">โดย ${a.adm3By}</
     }
 
     // ── UPLOAD ────────────────────────────────────────────────
+    function toggleOtherPos() {
+      const sel = document.getElementById('u-pos').value;
+      document.getElementById('u-pos-other-row').style.display = sel === 'อื่นๆ' ? 'flex' : 'none';
+    }
     function onFile(f) {
       if (!f) return;
       document.getElementById('dz').classList.add('has');
@@ -3414,14 +3424,19 @@ ${a.adm3By ? `<div class="tl-sub" style="margin-top:5px">โดย ${a.adm3By}</
     function resetUpload() {
       ['u-name', 'u-phone'].forEach(i => document.getElementById(i).value = '');
       ['u-pos', 'u-src'].forEach(i => document.getElementById(i).selectedIndex = 0);
+      document.getElementById('u-pos-other').value = '';
+      document.getElementById('u-pos-other-row').style.display = 'none';
       document.getElementById('dz').classList.remove('has');
       document.getElementById('dz-fn').textContent = '';
     }
 
     async function submitUpload() {
       const name = document.getElementById('u-name').value.trim();
-      const pos = document.getElementById('u-pos').value;
-      if (!name || !pos) { alert('กรุณากรอกชื่อและเลือกตำแหน่ง'); return; }
+      let pos = document.getElementById('u-pos').value;
+      if (pos === 'อื่นๆ') {
+        pos = document.getElementById('u-pos-other').value.trim();
+      }
+      if (!name || !pos) { alert('กรุณากรอกชื่อและระบุตำแหน่ง'); return; }
 
       // ── upload ไฟล์ก่อน ──
       let resumeUrl = '';
@@ -3520,7 +3535,7 @@ ${a.adm3By ? `<div class="tl-sub" style="margin-top:5px">โดย ${a.adm3By}</
 ${a.resumeUrl ? `<div style="margin-bottom:8px"><a href="${a.resumeUrl}" target="_blank" class="oa-resume-link"><i class="ti ti-download" style="font-size:14px"></i>ดาวน์โหลด Resume</a></div>` : ''}
       <div class="hr-note-box">${a.step === 3 ? (a.hrNote || '(ไม่มีความเห็น)') : (a.hrResDet || '(ไม่มีความเห็น)')}</div>
 <div class="adm-acts" style="flex-direction:column;align-items:stretch">
-  ${currentUser.role === 'admin' ? `
+  ${(currentUser.role === 'admin' || currentUser.role === 'hr') ? `
 <textarea id="adm-note-${a.id}" placeholder="ความเห็น / โน้ต (ถ้ามี)" style="width:100%;padding:7px 9px;border:1px solid #d3d1c7;border-radius:7px;font-size:12px;font-family:inherit;color:#2c2c2a;resize:vertical;min-height:50px;outline:none;background:#fff;margin-bottom:8px;pointer-events:auto!important;opacity:1!important">${a.step === 3 ? (a.adm1 || '') : (a.adm2 || '')}</textarea>
 ${a.step === 6 ? `
 <div style="margin-top:7px">
@@ -3866,11 +3881,8 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
     }
 
     async function doDelete(id) {
-      const confirmed = await askConfirm('ยืนยันการลบผู้สมัครนี้?', { title: 'ลบผู้สมัคร', okText: 'ลบ', danger: true });
+      const confirmed = await askConfirm('ยืนยันการลบผู้สมัครนี้? ข้อมูลจะถูกลบออกจากระบบทั้งหมด (ทั้งฝั่ง HR และผู้บริหาร)', { title: 'ลบผู้สมัคร', okText: 'ลบ', danger: true });
       if (!confirmed) return;
-
-      // เช็คว่าฝั่ง admin ลบไปก่อนหน้าแล้วหรือยัง
-      const { data: raw } = await _sb.from('applicants').select('deleted_admin').eq('id', id).single();
 
       // เคลียร์ selection + panel ก่อน กัน race กับ realtime event
       selId = null; selOAId = null; selOfferId = null; selHistId = null;
@@ -3879,20 +3891,12 @@ ${status === 'accepted' || status === 'rejected' || sentValid ? '' : sendSection
       document.getElementById('offer-detail').innerHTML = '<div class="empty"><i class="ti ti-briefcase"></i>เลือกผู้สมัครเพื่อดูรายละเอียด Offer</div>';
       document.getElementById('history-detail').innerHTML = '<div class="empty"><i class="ti ti-history"></i>เลือกผู้สมัครเพื่อดูประวัติ</div>';
 
-      const targetA = DATA.find(x => x.id === id);
-      if (raw?.deleted_admin) {
-        // ลบถาวรเลย: admin ลบก่อนแล้ว หรือ step < 4 (ผู้บริหารยังไม่เคยเห็น)
-        const { error: delErr } = await _sb.from('applicants').delete().eq('id', id);
-        if (delErr) {
-          showToast('ลบถาวรไม่สำเร็จ: ' + delErr.message, true);
-        } else {
-          showToast('ลบข้อมูลถาวรแล้ว');
-        }
+      // ลบถาวรทันที: หายทั้งฝั่ง HR และฝั่งผู้บริหาร (ไม่ใช้การซ่อนแบบสองขั้นตอนอีกต่อไป)
+      const { error: delErr } = await _sb.from('applicants').delete().eq('id', id);
+      if (delErr) {
+        showToast('ลบไม่สำเร็จ: ' + delErr.message, true);
       } else {
-        // step >= 4 แล้ว → ผู้บริหารเคยเห็น → ซ่อนจาก HR เท่านั้น
-        const ok = await dbUpdate(id, { deleted: true });
-        if (!ok) return;
-        showToast('ลบออกจากระบบ HR แล้ว');
+        showToast('ลบข้อมูลแล้ว');
       }
 
       await dbLoad();
